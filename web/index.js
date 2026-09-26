@@ -66,8 +66,17 @@ function renderStatusData(data) {
             cardDiv.appendChild(endpointsTitleDiv);
         }
         const endpointsDiv = document.createElement('div');
-        endpointsDiv.innerHTML = Object.entries(info.provides_endpoints).map(([name, endpoint]) => 
-            `<button onclick="clickEndpoint('${endpoint}')">${name}</button>`).join(' ');
+        // Build the endpoint buttons with DOM APIs instead of `innerHTML`.
+        // Service names and endpoints come from the `/status` response, so
+        // interpolating them into markup would be a stored/reflected XSS sink,
+        // and the inline `onclick="clickEndpoint('...')"` attribute was a second
+        // injection point (a value containing a quote broke out of the handler).
+        for (const [name, endpoint] of Object.entries(info.provides_endpoints)) {
+            const endpointButton = document.createElement('button');
+            endpointButton.textContent = name;
+            endpointButton.addEventListener('click', () => clickEndpoint(endpoint));
+            endpointsDiv.appendChild(endpointButton);
+        }
         cardDiv.appendChild(endpointsDiv);
 
         controlPanel.appendChild(cardDiv);
